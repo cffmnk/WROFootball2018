@@ -1,0 +1,70 @@
+LCD.Print(Name, Value)      // Выводит на экран по шаблону: "Name=Value", ячейка для вывода автоматически смещается (до 20 ячеек)
+                            // Корректно работает только в цикле при постоянном обновлении без задержек
+LCD.PrintUpd()              // Обновляет экран и очищает его, ставиться перед командами LCD.Print
+
+Math.[TrigFunc]Deg          // Тригонометрические функции в градусах
+EV3File.ReadVal(Filename)   => Считанное число из файла (Если файла не существует программа выключиться)
+Math.Limit(Val, Min, Max)   => Ограниченное значение
+Math.LimitMin(Val1, Val2)   => Значение, ограниченное максимумом
+Math.LimitMax(Val1, Val2)   => Значение, ограниченное минимумом
+Math.FullTrunc(Val)         => Значение без дробной части
+Math.Trunc(Val, NumOfDec)   => Значение с количеством знаков после запятой NumOfDec
+Math.Select(Flag, TrueVal, FalseVal)
+                            => TrueVal, если Flag = "True", иначе FalseVal
+Math.CopySign(Val1, Val2)   => Val1 со знаком числа Val2 (Если Val2 = 0, то вернет 0)
+Math.Sqrt(Num)              => Квадратный корень числа
+Math.Sq(Num)                => Квадрат числа
+
+Sensor.Read(port)           => Значение датчика (анологично Sensor.ReadRawValue(port, 0))
+Sensor.ReadAdv(port, mode)  => Значение датчика в данном моде (-1 = не менять мод)
+Sensor.ReadSI(port)         => Значение датчика в единицах СИ
+Sensor.ReadSIAdv(port, mode)=> Значение датчика в единицах СИ в данном моде
+
+Sensor.ReadRGB(port, R, G, B)
+                            // Считывает значение RGB и записывает их в указанные переменные
+Sensor.CheckPorts(Ports)    // Проверяет подключены ли указанные порты (указывать в виде строки (макс 11 символов)), лишние символы игнорируются
+Mailbox.ConnectCheck(Name)  // Проверяет подключены ли вы к этому устройством
+Text.ToNum(Text)            => Число, считанное со строки (анологично EV3File.ConvertToNumber)
+Buttons.FastCurrent         => Строка, содержащая нажатые кнопки (быстрее, чем Buttons.Current)
+Assert.Pause()              // Бесконечное ожидание
+
+=========================== Узкоспециализированные команды ===========================
+
+Motor.Launch(portsName, speed)
+Motor.LaunchPower(portsName, power)
+Motor.Drive(portsBitField, speed)
+Motor.DrivePower(portsBitField, power)
+Motor.Encoder(portNum)      => Значение энкодера мотора (порты от 0 до 3)
+Motor.Encoder[port]         => Значение энкодера мотора
+
+EV3.BatteryCurrent          => Ток аккумулятора (амперы)
+EV3.BatteryVoltage          => Напряжение аккумулятора (вольты)
+EV3.GetName                 => Имя блока
+EV3.SetName(NewBrickName)
+EV3.TimeUs                  => Глобальный таймер (микросекунды)
+EV3.IMotor                  => Ток моторов (амперы)
+
+Buttons.Any                 => Нажата ли любая из кнопок
+Buttons.Nothing             => "True", если никакая кнопка не нажата, иначе "False"
+Buttons.AnyPressed          => Нажималась ли любая из кнокоп после последнего вызова или нажата ли сейчас
+Buttons.IsPressed(Btn)      => Нажата ли данная кнопка (0 - никакая, 1 - верхняя, 2 - центр, 3 - нижняя, 4 - правая, 5 - левая, 6 - выход, 7 - любая)
+Buttons.Number              => Номер нажатой кнопки (до 5) (выбирается первая по списку нажатая кнопка)
+Buttons.WaitForNewPress()   // Ожидает пока текущая клавиша отпуститься и нажмется новая
+Buttons.WaitForRelease()    // Ожидает пока все клавиши не будут отпущены
+Buttons.SetBackBlock(flag)  // Заблокировать (1) разблокировать (0) выключение программы кнопкой "выход"
+
+Text.Delimit(Text, pattern) => Строка, которая находится после паттерна в исходном тексте
+
+LCD.DotLine(Color, X1, Y1, X2, Y2, OnLen, OffLen)
+                            // Рисует пунктирную линию с заданной длиной сегментов разных цветов
+LCD.Store(level)            // Сохраняет изображение экрана под данным числом
+LCD.Restore(level)          // Выводит на экран сохраненное изображение (0 - до старта программы)
+LCD.CenterText(Color, Y, Font, Text)
+                            // Выводит текст, выровненный по центру
+LCD.LeftText(Color, X, Y, Font, Text)
+                            // Выводит текст слево от X
+Mailbox.ReadLast(BoxID)     => Последнее сообщение в ящике
+
+EV3.LED(color)              // 0 - черный, 1 - зеленый, 2 - красный, 3 - оранжевый, [4-6] - вспышки, [7-9] - пульсации
+
+Math.Circle(Variable)       // "Закругляет" значение переменной (Приводит значения отклонения в [-180; 180]), нужно для отклонения от азимута
