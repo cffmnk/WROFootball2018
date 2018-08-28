@@ -1,0 +1,46 @@
+COMPASS = 2
+
+Sub compass_update
+    compass_raw = Sensor.ReadI2CRegisters(COMPASS, 1, 66, 4)
+    facing = compass_raw[0] * 2 + compass_raw[1]
+EndSub
+
+compass_update()
+Program.Delay(300)
+
+file = EV3File.OpenWrite("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
+
+While Buttons.Current <> "E"
+EndWhile
+
+calibration()
+target = facing
+EV3File.WriteLine(file, target)
+LCD.Print("target", target)
+Speaker.Tone(40, 1000, 100)
+Program.Delay(500)
+
+While Buttons.Current <> "E"
+EndWhile
+
+calibration()
+target_l = facing
+EV3File.WriteLine(file, target_l)
+LCD.Print("target_l", target_l)
+Speaker.Tone(40, 1000, 100)
+Program.Delay(500)
+
+While Buttons.Current <> "E"
+EndWhile
+
+calibration()
+target_r = facing
+EV3File.WriteLine(file, target_r)
+LCD.Print("target_r", target_r)
+Speaker.Tone(40, 1000, 100)
+Program.Delay(500)
+
+While Buttons.Current <> "E"
+EndWhile
+
+EV3File.Close(file)

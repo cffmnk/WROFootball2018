@@ -36,26 +36,23 @@ ball_boost = -1000
 ball_close = "False"
 ball_catched = "False"
 
-path = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
-target = EV3File.ConvertToNumber(EV3File.ReadLine(path))
-target_l = EV3File.ConvertToNumber(EV3File.ReadLine(path))
-target_r = EV3File.ConvertToNumber(EV3File.ReadLine(path))
-EV3File.Close(path)
+file = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
+target = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+target_l = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+target_r = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+EV3File.Close(file)
 
-path = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/ir.txt")
+file = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/ir.txt")
 For i = 0 to 9
-    close_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+    close_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
 EndFor
 For i = 0 to 9
-    mid_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+    mid_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
 EndFor
 For i = 0 to 9
-    far_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+    far_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
 EndFor
-For i = 0 to 9
-    cm_ir[i] = (close_ir[i] + mid_ir[i]) / 2
-    mf_ir[i] = (far_ir[i] + mid_ir[i]) / 2
-EndFor
+EV3File.Close(file)
 
 
 Sub compass_update

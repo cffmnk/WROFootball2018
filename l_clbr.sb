@@ -1,0 +1,21 @@
+LIGHT = 3
+
+file = EV3File.OpenWrite("/home/root/lms2012/prjs/SD_Card/lol/.calibration/light.txt")
+
+While Buttons.Current <> "U"
+EndWhile
+
+Sensor.SetMode(LIGHT, 0)
+
+barrier = 0
+For i = 1 to 30
+    barrier = barrier + Sensor.ReadRawValue(LIGHT, 0)
+EndFor
+barrier = barrier / 30
+
+While Buttons.Current <> "U"
+EndWhile
+
+EV3File.WriteLine(file, barrier)
+
+EV3File.Close(file)

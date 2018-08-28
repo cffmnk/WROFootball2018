@@ -20,7 +20,7 @@ For i = 1 to 9
     data[i] = 0
 EndFor
 
-While Buttons.Current <> "U"
+While Buttons.Current <> "E"
     irseeker_update()
 
     data[dir] = Math.Max(data[dit], int)
@@ -42,7 +42,7 @@ For i = 1 to 9
     data[i] = 0
 EndFor
 
-While Buttons.Current <> "U"
+While Buttons.Current <> "E"
     irseeker_update()
 
     data[dir] = Math.Max(data[dit], int)
@@ -64,7 +64,7 @@ For i = 1 to 9
     data[i] = 0
 EndFor
 
-While Buttons.Current <> "U"
+While Buttons.Current <> "E"
     irseeker_update()
 
     data[dir] = Math.Max(data[dit], int)
