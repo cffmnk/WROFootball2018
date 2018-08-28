@@ -6,6 +6,11 @@ kd = 1
 
 role = 1
 
+y_min = 0
+y_max = 5000
+x_min = -2000
+x_max = 2000
+
 boost_speed = 135
 max_speed = 130
 
@@ -143,6 +148,10 @@ While "True"
         ball_catched = "False"
     EndIf
 
+    If aim <> target Then
+        Speaker.Tone(40, 500, 100)
+    EndIf
+
     err = facing - aim
     u = kp * Math.Circle(err) + kd * (err - pr_err)
 
@@ -153,6 +162,9 @@ While "True"
 
     x = x + speed * Math.CosDeg(direction + facing - target)
     y = y + speed * Math.SinDeg(direction + facing - target)
+
+    x = Math.Limit(x, x_min, x_max)
+    y = Math.Limit(y, y_min, y_max)
   
     Motor.StartPower("A", motor_a)
     Motor.StartPower("B", motor_b)
