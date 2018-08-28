@@ -160,16 +160,15 @@ While "True"
     motor_c = -speed * Math.SinDeg(direct + 45) - u
     motor_d =  speed * Math.SinDeg(direct - 45) + u
 
-    x = x + speed * Math.CosDeg(direction + facing - target)
-    y = y + speed * Math.SinDeg(direction + facing - target)
-
-    x = Math.Limit(x, x_min, x_max)
-    y = Math.Limit(y, y_min, y_max)
-  
     Motor.StartPower("A", motor_a)
     Motor.StartPower("B", motor_b)
     Motor.StartPowet("C", motor_c)
     Motor.StartPowet("D", motor_d)
+
+    x = x + speed * Math.CosDeg(direction + facing - target)
+    y = y + speed * Math.SinDeg(direction + facing - target)
+    x = Math.Limit(x, x_min, x_max)
+    y = Math.Limit(y, y_min, y_max)
 
     LCD.PrintUpd()
     LCD.Print("Battery", EV3.BatteryVoltage)

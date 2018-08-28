@@ -1,0 +1,82 @@
+IRSEEKER = 1
+
+file = EV3File.OpenWrite("/home/root/lms2012/prjs/SD_Card/lol/.calibration/ir.txt")
+
+Sub irseeker_update
+    ir_raw = Sensor.ReadI2CRegisters(IRSEEKER, 8, 73, 6)
+    int = (ir_raw[1] + ir_raw[2] + ir_raw[3] + ir_raw[4] + ir_raw[5]) / (2 - Math.Remainder(ir_raw[0], 2))
+    dir = ir_raw[0] - 5
+EndSub
+
+LCD.PrintUpd()
+LCD.CenterText(1, 20, 1, "Press E")
+
+While Buttons.Current <> "E"
+EndWhile
+Speaker.Tone(40, 1000, 100)
+Program.Delay(100)
+
+For i = 1 to 9
+    data[i] = 0
+EndFor
+
+While Buttons.Current <> "U"
+    irseeker_update()
+
+    data[dir] = Math.Max(data[dit], int)
+
+    LCD.PrintUpd()
+    For i = 1 to 9
+        LCD.Print(i, data[i])
+    EndFor
+EndWhile
+
+For i = 1 to 9
+    EV3File.WriteLine(file, data[i])
+EndFor
+
+Speaker.Tone(40, 1000, 100)
+Program.Delay(100)
+
+For i = 1 to 9
+    data[i] = 0
+EndFor
+
+While Buttons.Current <> "U"
+    irseeker_update()
+
+    data[dir] = Math.Max(data[dit], int)
+
+    LCD.PrintUpd()
+    For i = 1 to 9
+        LCD.Print(i, data[i])
+    EndFor
+EndWhile
+
+For i = 1 to 9
+    EV3File.WriteLine(file, data[i])
+EndFor
+
+Speaker.Tone(40, 1000, 100)
+Program.Delay(100)
+
+For i = 1 to 9
+    data[i] = 0
+EndFor
+
+While Buttons.Current <> "U"
+    irseeker_update()
+
+    data[dir] = Math.Max(data[dit], int)
+
+    LCD.PrintUpd()
+    For i = 1 to 9
+        LCD.Print(i, data[i])
+    EndFor
+EndWhile
+
+For i = 1 to 9
+    EV3File.WriteLine(file, data[i])
+EndFor
+
+EV3File.Close(file)
