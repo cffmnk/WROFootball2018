@@ -4,10 +4,16 @@
 kp = 0.7
 kd = 1
 
+role = 1
+
 boost_speed = 135
 max_speed = 130
 
+boost_enable = "True"
+boost_time = 300
 
+turns_enable = "True"
+turns_time = -1
 '----------'
 
 IRSEEKER = 1
@@ -17,6 +23,13 @@ LIGHT = 3
 Sensor.SetMode(LIGHT, 0)
 
 pr_err = 0
+pr_dir = 0
+
+last_reset = 0
+
+ball_boost = -1000
+ball_close = "False"
+ball_catched = "False"
 
 path = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
 target = EV3File.ConvertToNumber(EV3File.ReadLine(path))
@@ -24,22 +37,132 @@ target_l = EV3File.ConvertToNumber(EV3File.ReadLine(path))
 target_r = EV3File.ConvertToNumber(EV3File.ReadLine(path))
 EV3File.Close(path)
 
+path = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/ir.txt")
+For i = 0 to 9
+    close_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+EndFor
+For i = 0 to 9
+    mid_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+EndFor
+For i = 0 to 9
+    far_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+EndFor
+For i = 0 to 9
+    cm_ir[i] = (close_ir[i] + mid_ir[i]) / 2
+    mf_ir[i] = (far_ir[i] + mid_ir[i]) / 2
+EndFor
+
+
 Sub compass_update
-  compass_raw = Sensor.ReadI2CRegisters(COMPASS, 1, 66, 4)
-  facing = compass_raw[0] * 2 + compass_raw[1]
+    compass_raw = Sensor.ReadI2CRegisters(COMPASS, 1, 66, 4)
+    facing = compass_raw[0] * 2 + compass_raw[1]
 EndSub
 
 Sub irseeker_update
-  ir_raw = Sensor.ReadI2CRegisters(IRSEEKER, 8, 73, 6)
-  int = (ir_raw[1] + ir_raw[2] + ir_raw[3] + ir_raw[4] + ir_raw[5]) / (2 - Math.Remainder(ir_raw[0], 2))
-  dir = ir_raw[0] - 5
+    ir_raw = Sensor.ReadI2CRegisters(IRSEEKER, 8, 73, 6)
+    int = (ir_raw[1] + ir_raw[2] + ir_raw[3] + ir_raw[4] + ir_raw[5]) / (2 - Math.Remainder(ir_raw[0], 2))
+    dir = ir_raw[0] - 5
 EndSub
 
 While "True"
     aim = target
+    speed = 0
+    direct = 0
+    direction = 0
 
     compass_update()
     irseeker_update()
 
-    
+    If role = 1 Then
+        speed = max_speed
+
+        If dir = 0 Then
+            direct = 0
+            direction = 0
+        EndIf
+        If dir = 1 Then
+            direct = 50
+            direction = 50
+        EndIf
+        If dir = -1 Then
+            direct = -50
+            direction = -50
+        EndIf
+        If dir = 2 Then
+            direct = 90
+            direction = 90
+        EndIf
+        If dir = -2 Then
+            direct = -90
+            direction = -90
+        EndIf
+        If dir = 3 Then
+            direct = 135
+            direction = 135
+        EndIf
+        If dir = -3 Then
+            direct = -135
+            direction = -135
+        EndIf
+        If dir = 4 Then
+            direct = 180
+            direction = 180
+        EndIf
+        If dir = -4 Then
+            direct = -180
+            direction = -180
+        EndIf
+        If dir = -5 Then
+            direct = 180
+            direction = 180
+        EndIf
+
+        If int > close_ir[dir] Then
+            ball_close = "True"
+            If Sensor.ReadRawValue(LIGHT, 0) < 2100 Then
+                ball_boost = EV3.Time
+            EndIf
+        EndIf
+    EndIf
+
+    If boost_enable And EV3.Time - ball_boost < boost_time Then
+        direct = 0
+        direction = 0
+        speed = boost_speed
+        ball_catched = "True"
+
+        If turns_enable And EV3.Time - last_reset < turns_time Then
+            If y > 1000 And x > 2500 Then
+                aim = target_r
+            EndIf
+            If y < -1000 And x > 2500 Then
+                aim = target_l
+            EndIf
+        EndIf
+    Else
+        ball_catched = "False"
+    EndIf
+
+    err = facing - aim
+    u = kp * Math.Circle(err) + kd * (err - pr_err)
+
+    motor_a =  speed * Math.SinDeg(direct + 45) - u
+    motor_b = -speed * Math.SinDeg(direct - 45) + u
+    motor_c = -speed * Math.SinDeg(direct + 45) - u
+    motor_d =  speed * Math.SinDeg(direct - 45) + u
+
+    x = x + speed * Math.CosDeg(direction + facing - target)
+    y = y + speed * Math.SinDeg(direction + facing - target)
+  
+    Motor.StartPower("A", motor_a)
+    Motor.StartPower("B", motor_b)
+    Motor.StartPowet("C", motor_c)
+    Motor.StartPowet("D", motor_d)
+
+    LCD.PrintUpd()
+    LCD.Print("Battery", EV3.BatteryVoltage)
+    LCD.Print("(x,y)", "(" + x + "," + y + ")")
+
+    pr_err = err
+    pr_dir = dir
 EndWhile
