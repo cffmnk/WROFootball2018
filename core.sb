@@ -1,0 +1,45 @@
+'----------'
+'|Settings|'
+'----------'
+kp = 0.7
+kd = 1
+
+boost_speed = 135
+max_speed = 130
+
+
+'----------'
+
+IRSEEKER = 1
+COMPASS = 2
+LIGHT = 3
+
+Sensor.SetMode(LIGHT, 0)
+
+pr_err = 0
+
+path = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
+target = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+target_l = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+target_r = EV3File.ConvertToNumber(EV3File.ReadLine(path))
+EV3File.Close(path)
+
+Sub compass_update
+  compass_raw = Sensor.ReadI2CRegisters(COMPASS, 1, 66, 4)
+  facing = compass_raw[0] * 2 + compass_raw[1]
+EndSub
+
+Sub irseeker_update
+  ir_raw = Sensor.ReadI2CRegisters(IRSEEKER, 8, 73, 6)
+  int = (ir_raw[1] + ir_raw[2] + ir_raw[3] + ir_raw[4] + ir_raw[5]) / (2 - Math.Remainder(ir_raw[0], 2))
+  dir = ir_raw[0] - 5
+EndSub
+
+While "True"
+    aim = target
+
+    compass_update()
+    irseeker_update()
+
+    
+EndWhile

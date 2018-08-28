@@ -1,0 +1,16 @@
+name[0] = "ALICE"
+name[1] = "BOB"
+
+i = 0
+
+While Buttons.Current <> "E"
+    If Buttons.Current = "L" Or Buttons.Current = "R" Then
+        i = 1 - i
+    EndIf
+
+    LCD.PrintUpd()
+    LCD.Print("Name", EV3.GetName)
+    LCD.Print("New Name", name[i])
+EndWhile
+
+EV3.SetName(name[i])
