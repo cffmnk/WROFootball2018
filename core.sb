@@ -4,7 +4,7 @@
 kp = 0.7
 kd = 1
 
-role = 1
+role = 0
 
 y_min = 0
 y_max = 5000
@@ -17,43 +17,61 @@ max_speed = 130
 boost_enable = "True"
 boost_time = 300
 
+restart_boost_enable = "True"
+restart_boost_time = 1000
+
 turns_enable = "True"
 turns_time = -1
+turns_sound = "True"
+
+move_enable = "True"
+ball_follow_enable = "True"
+position_enable = "True"
 '----------'
+
+If EV3.GetName <> "ALICE" And EV3.GetName <> "BOB" Then
+    Assert.Failed("Bad EV3 Name!")
+EndIf
 
 IRSEEKER = 1
 COMPASS = 2
 LIGHT = 3
-
-Sensor.SetMode(LIGHT, 0)
 
 pr_err = 0
 pr_dir = 0
 
 last_reset = 0
 
+restart_boost = EV3.Time
+
 ball_boost = -1000
 ball_close = "False"
 ball_catched = "False"
+ball_lost = "False"
 
-file = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
-target = EV3File.ConvertToNumber(EV3File.ReadLine(file))
-target_l = EV3File.ConvertToNumber(EV3File.ReadLine(file))
-target_r = EV3File.ConvertToNumber(EV3File.ReadLine(file))
-EV3File.Close(file)
+box_id = Mailbox.Create("mail")
 
-file = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/ir.txt")
-For i = 0 to 9
-    close_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
-EndFor
-For i = 0 to 9
-    mid_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
-EndFor
-For i = 0 to 9
-    far_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
-EndFor
-EV3File.Close(file)
+Sub calibration
+    file = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
+    target = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+    target_l = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+    target_r = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+    EV3File.Close(file)
 
+    file = EV3File.OpenRead("/home/root/lms2012/prjs/SD_Card/lol/.calibration/ir.txt")
+    For i = 0 to 9
+        close_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+    EndFor
+    For i = 0 to 9
+        mid_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+    EndFor
+    For i = 0 to 9
+        far_ir[i] = EV3File.ConvertToNumber(EV3File.ReadLine(file))
+    EndFor
+    EV3File.Close(file)
+
+    ball_close_light = EV3File.ReadVal("/home/root/lms2012/prjs/SD_Card/lol/.calibration/light.txt")
+EndSub
 
 Sub compass_update
     compass_raw = Sensor.ReadI2CRegisters(COMPASS, 1, 66, 4)
@@ -66,16 +84,55 @@ Sub irseeker_update
     dir = ir_raw[0] - 5
 EndSub
 
+Sensor.SetMode(LIGHT, 0)
+
+calibration()
+
+Sub buttons
+    If Buttons.FastCurrent = "U" Then
+        x = 0
+        y = 0
+        last_reset = EV3.Time
+        int = 500
+        dir = 0
+        restart_boost = EV3.Time
+    EndIf
+    If Buttons.FastCurrent = "D" Then
+        x = 0
+        y = 0
+        last_reset = EV3.Time
+        int = 0
+        dir = 0
+    EndIf
+    If Buttons.FastCurrent = "E" Then
+        x = 0
+        y = 0
+        last_reset = EV3.Time
+    EndIf
+    If Buttons.FastCurrent = "L" Then
+        x = 0
+        y = 0
+        last_reset = EV3.Time
+    EndIf
+    If Buttons.FastCurrent = "R" Then
+        x = 0
+        y = 0
+        last_reset = EV3.Time
+    EndIf
+EndSub
+
 While "True"
     aim = target
     speed = 0
     direct = 0
     direction = 0
 
+    bt()
+    buttons()
     compass_update()
     irseeker_update()
 
-    If role = 1 Then
+    If ball_follow_enable And role > 0 Then
         speed = max_speed
 
         If dir = 0 Then
@@ -117,6 +174,9 @@ While "True"
         If dir = -5 Then
             direct = 180
             direction = 180
+            ball_lost = "True"
+        Else
+            ball_lost = "False"
         EndIf
 
         If int > close_ir[dir] Then
@@ -135,17 +195,17 @@ While "True"
 
         If turns_enable And EV3.Time - last_reset < turns_time Then
             If y > 1000 And x > 2500 Then
-                aim = target_r
+                aim = target_l
             EndIf
             If y < -1000 And x > 2500 Then
-                aim = target_l
+                aim = target_r
             EndIf
         EndIf
     Else
         ball_catched = "False"
     EndIf
 
-    If aim <> target Then
+    If turns_sound And aim <> target Then
         Speaker.Tone(40, 500, 100)
     EndIf
 
@@ -157,15 +217,19 @@ While "True"
     motor_c = -speed * Math.SinDeg(direct + 45) - u
     motor_d =  speed * Math.SinDeg(direct - 45) + u
 
-    Motor.StartPower("A", motor_a)
-    Motor.StartPower("B", motor_b)
-    Motor.StartPowet("C", motor_c)
-    Motor.StartPowet("D", motor_d)
+    If move_enable Then
+        Motor.StartPower("A", motor_a)
+        Motor.StartPower("B", motor_b)
+        Motor.StartPowet("C", motor_c)
+        Motor.StartPowet("D", motor_d)
+    EndIf
 
-    x = x + speed * Math.CosDeg(direction + facing - target)
-    y = y + speed * Math.SinDeg(direction + facing - target)
-    x = Math.Limit(x, x_min, x_max)
-    y = Math.Limit(y, y_min, y_max)
+    If position_enable Then
+        x = x + speed * Math.SinDeg(direction + facing - target)
+        y = y + speed * Math.CosDeg(direction + facing - target)
+        x = Math.Limit(x, x_min, x_max)
+        y = Math.Limit(y, y_min, y_max)
+    EndIf
 
     LCD.PrintUpd()
     LCD.Print("Battery", EV3.BatteryVoltage)
