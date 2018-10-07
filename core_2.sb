@@ -1,0 +1,256 @@
+'----------'
+'|Settings|'
+'----------'
+'variables'
+kp = 0.7
+kd = 1
+
+x_min = -2000
+x_max = 2000
+y_min = 0
+y_max = 5000
+start_x = 0
+start_y = 200
+
+turns_x = 1300
+turns_y = 3000
+
+max_speed = 100
+boost_speed = 130
+
+ball_boost_time = 300
+restart_boost_time = 1000
+
+'restrictions'
+ball_follow_enable = "true"
+ball_status_enable = "true"
+ball_boost_enable = "true"
+
+move_enable = "true"
+aim_enable = "true"
+
+position_enable = "true"
+
+turns_enable = "true"
+turns_sound_enable = "true"
+
+print_enable = "true"
+
+bt_enable = "true"
+'----------'
+
+if ev3.getName <> "ALICE" and ev3.getName <> "BOB" then
+    assert.failed("Bad EV3 Name!")
+endif
+
+if ev3.getName = "ALICE" then
+    pname = "BOB"
+else
+    pname = "ALICE"
+endif
+
+IRSEEKER = 1
+COMPASS = 2
+FRONT_LIGHT = 3
+BACK_LIGHT = 4
+
+box_id = mailbox.create("mail")
+pmsg = ";"
+
+pr_err = 0
+ball_status = 3
+ball_boost_start = ev3.Time
+x = 0
+y = 0
+
+if ball_boost_enable then
+    ball_status_enable = "true"
+endif
+
+if turns_enable then
+    position_enable = "true"
+endif
+
+sub calibration
+    file = ev3file.openRead(".calibration/compass.txt")
+    target = ev3file.convertToNumber(ev3file.readLine(file))
+    target_l = ev3file.convertToNumber(ev3file.readLine(file))
+    target_r = ev3file.convertToNumber(ev3file.readLine(file))
+    ev3file.close(file)
+
+    file = ev3file.openRead(".calibration/ir.txt")
+    for i = 0 to 9
+        close_ir[i] = ev3file.convertToNumber(ev3file.readLine(file))
+    endfor
+    for i = 0 to 9
+        mid_ir[i] = ev3file.convertToNumber(ev3file.readLine(file))
+    endfor
+    for i = 0 to 9
+        far_ir[i] = ev3file.convertToNumber(ev3file.readLine(file))
+    endfor
+    ev3file.close(file)
+
+    ball_close_light = 2100
+    wall_close_light = 1000
+endsub
+
+sub compassUpdate
+    compass_raw = sensor.readI2CRegisters(COMPASS, 1, 66, 4)
+    facing = compass_raw[0] * 2 + compass_raw[1]
+endsub
+
+sub irseekerUpdate
+    ir_raw = sensor.readI2CRegisters(IRSEEKER, 8, 73, 6)
+    int = (ir_raw[1] + ir_raw[2] + ir_raw[3] + ir_raw[4] + ir_raw[5]) / (2 - Math.Remainder(ir_raw[0], 2))
+    dir = ir_raw[0] - 5
+endsub
+
+sensor.setMode(FRONT_LIGHT,0)
+calibration()
+
+while "true"
+    compassUpdate()
+    irseekerUpdate()
+
+    aim = target
+    speed = 0
+    direct = 0
+    direction = 0
+    motor_a = 0
+    motor_b = 0
+    motor_c = 0
+    motor_d = 0
+
+    if ball_status_enable then
+        if int < far_ir[dir] then
+            ball_status = 3
+        elseif int < mid_ir[dir] then
+            ball_status = 2
+        elseif int < close_ir[dir] then
+            ball_status = 1
+        elseif sensor.readRawValue(FRONT_LIGHT, 0) < ball_close_light then
+            ball_status = 0
+            ball_boost_start = ev3.Time
+        endif
+    endif
+
+    if ball_follow_enable then
+        speed = max_speed
+
+        if dir = 0 then
+            direct = 0
+            direction = 0
+        endif
+
+        if dir = 1 then
+            direct = 50
+            direction = 50
+        endif
+
+        if dir = -1 then
+            direct = -50
+            direction = -50
+        endif
+
+        if dir = 2 then
+            direct = 90
+            direction = 90
+        endif
+
+        if dir = -2 then
+            direct = -90
+            direction = -90
+        endif
+
+        if dir = 3 then
+            direct = 135
+            direction = 135
+        endif
+
+        if dir = -3 then
+            direct = -135
+            direction = -135
+        endif
+
+        if math.abs(dir) > 3 then
+            direct = 180
+            direction = -180
+        endif
+    endif
+
+    if ball_boost_enable then
+        if ev3.time - ball_boost_start < ball_boost_time then
+            direct = 0
+            direction = 0
+            speed = boost_speed
+        endif
+    endif
+
+    if position_enable then
+        x = x + speed * math.sin(math.getRadians(direction + facing - target))
+        y = y + speed * math.cos(math.getRadians(direction + facing - target))
+        x = math.limit(x, x_min, x_max)
+        y = math.limit(y, y_min, y_max)
+    endif
+
+    if turns_enable then
+        if (ball_boost_enable and ev3.time - ball_boost_start < ball_boost_time) or (ball_status_enable = "false") then
+            if y > turns_y and x > turns_x then
+                aim = target_l
+            elseif y > turns_y and x < -turns_x then
+                aim = target_r
+            endif
+        endif
+    endif
+
+    if turns_sound_enable and aim <> target then
+        speaker.tone(40, 500, 30)
+    endif
+
+    err = facing - aim
+    u = kp * (err - (err - Math.Remainder(err, 180)) / 180 * 360) + kd * (err - pr_err)
+
+    if aim_enable then
+        motor_a = u
+        motor_b = u
+        motor_c = u
+        motor_d = u
+    endif
+
+    if move_enable then
+        motor_a = motor_a + speed * math.sin(math.getRadians(direct + 45))
+        motor_b = motor_b + speed * math.sin(math.getRadians(direct - 45))
+        motor_c = motor_c - speed * math.sin(math.getRadians(direct + 45))
+        motor_d = motor_d - speed * math.sin(math.getRadians(direct - 45))
+    endif
+
+    if bt_enable then
+        msg = tch + ";" + x + ";" + y + ";" + ball_status + ";" + dir + ";"
+        mailbox.send(pname, "mail", msg)
+        if mailbox.isAvailable(box_id) then
+            pmsg = mailbox.receive(box_id)
+        endif
+        i = 1
+
+        txt = ""
+        while text.getSubText(pmsg, i, 1) <> ";"
+            txt = txt + text.getSubText(pmsg, i, 1)
+            i = i + 1
+        endwhile
+        ptch = text.toNum(txt)
+    endif
+
+    if print_enable then
+        LCD.printUpd()
+        LCD.print("msg", pmsg)
+        LCD.print("touch", tch)
+        LCD.print("txt", ptch)
+    endif
+
+    motor.startPower("A", motor_a)
+    motor.startPower("B", motor_b)
+    motor.startPower("C", motor_c)
+    motor.startPower("D", motor_d)
+
+    pr_err = err
+endwhile

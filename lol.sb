@@ -1,0 +1,5 @@
+while "true"
+    LCD.printUpd()
+    LCD.print("a", 1)
+    LCD.print("b", 2)
+endwhile

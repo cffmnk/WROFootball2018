@@ -1,6 +1,6 @@
 LIGHT = 3
 
-file = EV3File.OpenWrite("/home/root/lms2012/prjs/SD_Card/lol/.calibration/light.txt")
+file = EV3File.OpenWrite(".calibration/light.txt")
 
 While Buttons.Current <> "U"
 EndWhile

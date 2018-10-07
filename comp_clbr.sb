@@ -8,7 +8,7 @@ EndSub
 compass_update()
 Program.Delay(300)
 
-file = EV3File.OpenWrite("/home/root/lms2012/prjs/SD_Card/lol/.calibration/compass.txt")
+file = EV3File.OpenWrite(".calibration/compass.txt")
 
 While Buttons.Current <> "E"
 EndWhile
